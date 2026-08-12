@@ -45,6 +45,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Events implements Listener {
@@ -321,7 +323,7 @@ public class Events implements Listener {
         if (entity instanceof Cat cat) {
             int randomNumber = ThreadLocalRandom.current().nextInt(0, 100_000);
             if (cat.getCatType() == Cat.Type.RED && randomNumber == 91622) {
-                OfflinePlayer player = Bukkit.getOfflinePlayer("22815ad5-2a54-44c0-8f83-f65cfe5310f8"); // _lagpc_
+                OfflinePlayer player = Bukkit.getOfflinePlayer(UUID.fromString("22815ad5-2a54-44c0-8f83-f65cfe5310f8")); // _lagpc_
                 entity.setCustomName("Kleintje");
                 ((Cat) entity).setOwner(player);
             }
