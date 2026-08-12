@@ -1,3 +1,8 @@
 options:
-  auto-update: true
-  nerf-other-addons: true
+  # Legacy builds are maintained through this fork; never overwrite this JAR
+  # with an unrelated upstream Blob build.
+  auto-update: false
+
+  # Do not silently rebalance generators from Slimefun or other addons.
+  # Servers that intentionally want the historical behavior may opt in.
+  nerf-other-addons: false
