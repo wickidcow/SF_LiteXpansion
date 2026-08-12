@@ -6,31 +6,47 @@
 
     <groupId>dev.j3fftw</groupId>
     <artifactId>LiteXpansion</artifactId>
-    <version>MODIFIED</version>
+    <version>1.0.0-26.2-legacy</version>
+    <name>LiteXpansion Legacy</name>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <paper.version>[26.2.build,)</paper.version>
+        <slimefun.groupId>com.github.SlimefunGuguProject</slimefun.groupId>
+        <slimefun.artifactId>Slimefun4</slimefun.artifactId>
+        <slimefun.version>2025.1</slimefun.version>
+    </properties>
 
     <repositories>
         <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
         <repository>
-            <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 
     <dependencies>
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.19-R0.1-SNAPSHOT</version>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>${paper.version}</version>
             <scope>provided</scope>
         </dependency>
 
+        <!--
+            Portable Maven fallback. GitHub Actions overwrites this exact local
+            coordinate with the Slimefun Legacy release JAR before compilation,
+            so published Legacy artifacts compile against Legacy itself.
+        -->
         <dependency>
-            <groupId>com.github.Slimefun</groupId>
-            <artifactId>Slimefun4</artifactId>
-            <version>1aeb0e8</version>
+            <groupId>${slimefun.groupId}</groupId>
+            <artifactId>${slimefun.artifactId}</artifactId>
+            <version>${slimefun.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -40,10 +56,11 @@
             <version>3.0.2</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
+            <version>1.18.46</version>
             <scope>provided</scope>
         </dependency>
 
@@ -61,8 +78,8 @@
     </dependencies>
 
     <build>
-        <defaultGoal>clean package</defaultGoal>
-        <finalName>${project.artifactId}</finalName>
+        <defaultGoal>clean verify</defaultGoal>
+        <finalName>LiteXpansion</finalName>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
 
         <resources>
@@ -77,7 +94,6 @@
             </resource>
             <resource>
                 <directory>${basedir}</directory>
-
                 <includes>
                     <include>LICENSE</include>
                 </includes>
@@ -88,37 +104,54 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.14.1</version>
                 <configuration>
-                    <source>16</source>
-                    <target>16</target>
+                    <release>${maven.compiler.release}</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.46</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
+                        <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
                     </execution>
                 </executions>
-
                 <configuration>
+                    <minimizeJar>true</minimizeJar>
                     <relocations>
                         <relocation>
                             <pattern>org.bstats</pattern>
-                            <shadedPattern>dev.j3fftw.litexpansion.bstats</shadedPattern>
+                            <shadedPattern>dev.j3fftw.litexpansion.libs.bstats</shadedPattern>
                         </relocation>
-
                         <relocation>
                             <pattern>dev.j3fftw.extrautils</pattern>
-                            <shadedPattern>dev.j3fftw.litexpansion.extrautils</shadedPattern>
+                            <shadedPattern>dev.j3fftw.litexpansion.libs.extrautils</shadedPattern>
                         </relocation>
                     </relocations>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.MF</exclude>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
             </plugin>
         </plugins>
