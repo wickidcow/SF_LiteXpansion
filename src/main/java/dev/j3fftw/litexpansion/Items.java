@@ -5,7 +5,6 @@ import dev.j3fftw.litexpansion.machine.MassFabricator;
 import dev.j3fftw.litexpansion.machine.Recycler;
 import dev.j3fftw.litexpansion.machine.RubberSynthesizer;
 import dev.j3fftw.litexpansion.machine.generators.AdvancedSolarPanel;
-import dev.j3fftw.litexpansion.utils.Constants;
 import dev.j3fftw.litexpansion.weapons.NanoBlade;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
@@ -18,7 +17,7 @@ import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.Registry;
+
 import java.util.List;
 
 public final class Items {
@@ -28,7 +27,7 @@ public final class Items {
         new NamespacedKey(LiteXpansion.getInstance(),
             "litexpansion"
         ),
-        CustomItemStack.create(PlayerHead.getItemStack(PlayerSkin.fromHashCode(
+        new CustomItemStack(PlayerHead.getItemStack(PlayerSkin.fromHashCode(
             "3f87fc5cbb233743a82fb0fa51fe739487f29bcc01c9026621ecefad197f4fb1")),
             "&7LiteXpansion"
         )
@@ -50,18 +49,15 @@ public final class Items {
         "NANO_BLADE",
         Material.DIAMOND_SWORD,
         "&2Nano Blade &c(Off)",
-        meta -> {
-            meta.setEnchantmentGlintOverride(true);
-            meta.setLore(List.of(
-                "",
-                "&fAn advanced piece of technology which can",
-                "&fcut through organic tissue with ease.",
-                "",
-                "&fToggle: &aRight Click",
-                "",
-                "&c&o&8\u21E8 &e\u26A1 &70 / " + NanoBlade.CAPACITY + " J"
-            ));
-        }
+        meta -> meta.setLore(List.of(
+            "",
+            "&fAn advanced piece of technology which can",
+            "&fcut through organic tissue with ease.",
+            "",
+            "&fToggle: &aRight Click",
+            "",
+            "&c&o&8\u21E8 &e\u26A1 &70 / " + NanoBlade.CAPACITY + " J"
+        ))
     );
     //endregion
 
@@ -171,7 +167,7 @@ public final class Items {
 
     public static final SlimefunItemStack THORIUM = new SlimefunItemStack(
         "THORIUM",
-        CustomItemStack.create(PlayerHead.getItemStack(PlayerSkin.fromHashCode(
+        new CustomItemStack(PlayerHead.getItemStack(PlayerSkin.fromHashCode(
             "b87403257c0eaa518cf186deccde137d476556ccff146d503fb2e73956582f37")),
             "Thorium"
         ),
@@ -246,16 +242,11 @@ public final class Items {
         "ADVANCED_CIRCUIT",
         Material.COBWEB,
         "&7Advanced Circuit",
-        meta -> {
-            meta.setEnchantmentGlintOverride(true);
-        }
+        meta -> meta.setEnchantmentGlintOverride(true)
     );
     //endregion
 
     //region Carbon Crap
-    //////////////////////////
-    // Carbon Crap
-    //////////////////////////
     public static final SlimefunItemStack COAL_DUST = new SlimefunItemStack(
         "COAL_DUST",
         Material.BLACK_DYE,
@@ -293,9 +284,7 @@ public final class Items {
         "LAPOTRON_CRYSTAL",
         Material.DIAMOND,
         "&7Lapotron Crystal",
-        meta -> {
-            meta.setEnchantmentGlintOverride(true);
-        }
+        meta -> meta.setEnchantmentGlintOverride(true)
     );
     public static final SlimefunItemStack REINFORCED_STONE = new SlimefunItemStack(
         "REINFORCED_STONE",
@@ -317,6 +306,7 @@ public final class Items {
         Material.IRON_INGOT,
         "&7Mixed Metal Ingot"
     );
+
     // Machines
     public static final SlimefunItemStack RECYCLER = new SlimefunItemStack(
         "SCRAP_MACHINE",
@@ -353,7 +343,8 @@ public final class Items {
         Material.IRON_BLOCK,
         "&7Macerator"
     );
-    //// Solar panels
+
+    // Solar panels
     public static final SlimefunItemStack ADVANCED_SOLAR_PANEL = new SlimefunItemStack(
         "ADVANCED_SOLAR_PANEL",
         Material.BLACK_GLAZED_TERRACOTTA,
@@ -414,7 +405,8 @@ public final class Items {
         Material.STRING,
         "&7Gold Cable"
     );
-    //Basic Machines
+
+    // Basic Machines
     public static final SlimefunItemStack REFINED_SMELTERY = new SlimefunItemStack(
         "REFINED_SMELTERY",
         Material.BLAST_FURNACE,
@@ -467,32 +459,26 @@ public final class Items {
         "ADVANCEDLX_SOLAR_HELMET",
         Material.DIAMOND_HELMET,
         "&7Super Advanced Solar Helmet",
-        meta -> {
-            meta.setEnchantmentGlintOverride(true);
-        }
+        meta -> meta.setEnchantmentGlintOverride(true)
     );
 
     public static final SlimefunItemStack HYBRID_SOLAR_HELMET = new SlimefunItemStack(
         "HYBRID_SOLAR_HELMET",
         Material.DIAMOND_HELMET,
         "&7Hybrid Solar Helmet",
-        meta -> {
-            meta.setEnchantmentGlintOverride(true);
-        }
+        meta -> meta.setEnchantmentGlintOverride(true)
     );
 
     public static final SlimefunItemStack ULTIMATE_SOLAR_HELMET = new SlimefunItemStack(
         "ULTIMATE_SOLAR_HELMET",
         Material.DIAMOND_HELMET,
         "&7Ultimate Solar Helmet",
-        meta -> {
-            meta.setEnchantmentGlintOverride(true);
-        }
+        meta -> meta.setEnchantmentGlintOverride(true)
     );
 
     public static final SlimefunItemStack FOOD_SYNTHESIZER = new SlimefunItemStack(
         "FOOD_SYNTHESIZER",
-        CustomItemStack.create(PlayerHead.getItemStack(PlayerSkin.fromHashCode(
+        new CustomItemStack(PlayerHead.getItemStack(PlayerSkin.fromHashCode(
             "a967efe969d264f635f2c201c34381ef59c72e16ec50af7692033121e22fba9c")),
             "Food Synthesizer"),
         "&dFood Synthesizer",
@@ -503,9 +489,7 @@ public final class Items {
         "&c&o&8\u21E8 &e\u26A1 &70 / 100 J"
     );
 
-    //////////////////////////
     // Plating
-    //////////////////////////
     public static final SlimefunItemStack IRON_PLATE = new SlimefunItemStack(
         "IRON_PLATE",
         Material.WHITE_CARPET,
@@ -535,9 +519,7 @@ public final class Items {
         "&7Iron Item Casing"
     );
 
-    //////////////////////////
     // Dust
-    //////////////////////////
     public static final SlimefunItemStack LAPIS_DUST = new SlimefunItemStack(
         "LAPIS_DUST",
         Material.PURPLE_DYE,
