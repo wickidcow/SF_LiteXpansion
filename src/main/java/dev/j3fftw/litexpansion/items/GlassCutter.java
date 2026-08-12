@@ -1,5 +1,6 @@
 package dev.j3fftw.litexpansion.items;
 
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import dev.j3fftw.litexpansion.Items;
 import dev.j3fftw.litexpansion.LiteXpansion;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -10,7 +11,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -65,7 +65,7 @@ public class GlassCutter extends SimpleSlimefunItem<ItemUseHandler> implements L
         ) {
             e.setCancelled(true);
 
-            final SlimefunItem slimefunItem = BlockStorage.check(block);
+            final SlimefunItem slimefunItem = StorageCacheUtils.getSlimefunItem(blockLocation);
 
             if (slimefunItem == null && removeItemCharge(e.getItem(), 0.5F)) {
                 blockLocation.getWorld().dropItemNaturally(blockLocation,
