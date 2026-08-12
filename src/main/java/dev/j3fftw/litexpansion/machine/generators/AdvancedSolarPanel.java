@@ -12,9 +12,6 @@ import io.github.thebusybiscuit.slimefun4.core.networks.energy.EnergyNetComponen
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.items.CustomItemStack;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
@@ -114,7 +111,7 @@ public class AdvancedSolarPanel extends SlimefunItem implements InventoryBlock, 
             return this.type.getNightGenerationRate();
         }
 
-        // Note: You need to get the block above for the light check, the block itself is always 0
+        // The block above must see full sky light for day-rate generation.
         if (world.isThundering() || world.hasStorm() || world.getTime() >= 13000
             || b.getLocation().add(0, 1, 0).getBlock().getLightFromSky() != 15
         ) {
@@ -145,8 +142,6 @@ public class AdvancedSolarPanel extends SlimefunItem implements InventoryBlock, 
         return new int[0];
     }
 
-    @Getter
-    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public enum Type {
 
         ADVANCED(Items.ADVANCED_SOLAR_PANEL, ADVANCED_DAY_RATE, ADVANCED_NIGHT_RATE, ADVANCED_OUTPUT,
@@ -179,5 +174,41 @@ public class AdvancedSolarPanel extends SlimefunItem implements InventoryBlock, 
 
         @Nonnull
         private final ItemStack[] recipe;
+
+        Type(@Nonnull SlimefunItemStack item, int dayGenerationRate, int nightGenerationRate,
+             int output, int storage, @Nonnull ItemStack[] recipe) {
+            this.item = item;
+            this.dayGenerationRate = dayGenerationRate;
+            this.nightGenerationRate = nightGenerationRate;
+            this.output = output;
+            this.storage = storage;
+            this.recipe = recipe;
+        }
+
+        @Nonnull
+        public SlimefunItemStack getItem() {
+            return item;
+        }
+
+        public int getDayGenerationRate() {
+            return dayGenerationRate;
+        }
+
+        public int getNightGenerationRate() {
+            return nightGenerationRate;
+        }
+
+        public int getOutput() {
+            return output;
+        }
+
+        public int getStorage() {
+            return storage;
+        }
+
+        @Nonnull
+        public ItemStack[] getRecipe() {
+            return recipe;
+        }
     }
 }
