@@ -1,63 +1,53 @@
 package dev.j3fftw.litexpansion;
 
 import dev.j3fftw.litexpansion.resources.ThoriumResource;
-import dev.j3fftw.litexpansion.service.MetricsService;
 import dev.j3fftw.litexpansion.ticker.PassiveElectricRemovalTicker;
-import dev.j3fftw.litexpansion.utils.Constants;
 import dev.j3fftw.litexpansion.utils.Reflections;
 import dev.j3fftw.litexpansion.uumatter.UUMatter;
 import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
 import io.github.thebusybiscuit.slimefun4.api.researches.Research;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.updater.BlobBuildUpdater;
-import io.github.thebusybiscuit.slimefun4.libraries.dough.updater.GitHubBuildsUpdater;
-import org.bstats.MetricsBase;
-import org.bstats.bukkit.Metrics;
 import org.bukkit.NamespacedKey;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.annotation.Nonnull;
-import java.io.File;
 
 public class LiteXpansion extends JavaPlugin implements SlimefunAddon {
 
     private static LiteXpansion instance;
 
-    private final MetricsService metricsService = new MetricsService();
-
     @Override
     public void onEnable() {
         setInstance(this);
+        saveDefaultConfig();
 
-        if (!new File(getDataFolder(), "config.yml").exists()) {
-            saveDefaultConfig();
+        getLogger().info("LiteXpansion Legacy starting for Minecraft 1.21.11+ / Paper 26.2.");
+
+        // The Legacy fork is updated through GitHub releases/actions. Never let the
+        // historical Blob updater replace this 26.2 build with an unrelated upstream JAR.
+        if (getConfig().getBoolean("options.auto-update", false)) {
+            getLogger().warning("options.auto-update is ignored by LiteXpansion Legacy; update using this fork's builds.");
         }
 
-        final Metrics metrics = new Metrics(this, 7111);
-        metricsService.setup(metrics);
-
-        if (getConfig().getBoolean("options.auto-update") && getDescription().getVersion().startsWith("DEV - ")) {
-            new BlobBuildUpdater(this, getFile(), "LiteXpansion", "Dev").start();
-        }
-
-        registerEnchantments();
-
-        if (getConfig().getBoolean("options.nerf-other-addons", true)) {
+        // Gugu/community maintenance changed this destructive cross-addon rebalance
+        // to opt-in. Preserve the historical behavior only for servers that request it.
+        if (getConfig().getBoolean("options.nerf-other-addons", false)) {
             getServer().getScheduler().runTask(this, this::nerfCrap);
         }
 
         ItemSetup.INSTANCE.init();
-
         getServer().getPluginManager().registerEvents(new Events(), this);
 
         UUMatter.INSTANCE.register();
-
         setupResearches();
         new ThoriumResource().register();
 
+        /*
+         * PassiveElectricRemovalTicker reads player inventories. Bukkit/Paper
+         * inventory access must not be performed from an asynchronous task.
+         */
         final PassiveElectricRemovalTicker perTicker = new PassiveElectricRemovalTicker();
-        getServer().getScheduler().runTaskTimerAsynchronously(this, perTicker, 20, 20);
+        getServer().getScheduler().runTaskTimer(this, perTicker, 20L, 20L);
     }
 
     @Override
@@ -65,45 +55,28 @@ public class LiteXpansion extends JavaPlugin implements SlimefunAddon {
         setInstance(null);
     }
 
-    private void registerEnchantments() {
-        if (!Enchantment.isAcceptingRegistrations()) {
-            Reflections.setStaticField(Enchantment.class, "acceptingNew", true);
-        }
-
-        Enchantment glowEnchantment = new GlowEnchant(Constants.GLOW_ENCHANT, new String[] {
-            "ADVANCED_CIRCUIT", "NANO_BLADE", "GLASS_CUTTER", "LAPOTRON_CRYSTAL",
-            "ADVANCEDLX_SOLAR_HELMET", "HYBRID_SOLAR_HELMET", "ULTIMATE_SOLAR_HELMET",
-            "DIAMOND_DRILL"
-        });
-
-        // Prevent double-registration errors
-        if (Enchantment.getByKey(glowEnchantment.getKey()) == null) {
-            Enchantment.registerEnchantment(glowEnchantment);
-        }
-    }
-
     private void nerfCrap() {
-        // Vanilla SF
+        // Vanilla Slimefun
         final SlimefunItem energizedPanel = SlimefunItem.getById("SOLAR_GENERATOR_4");
         if (energizedPanel != null) {
             Reflections.setField(energizedPanel, "dayEnergy", 64);
             Reflections.setField(energizedPanel, "nightEnergy", 32);
         }
 
-        // InfinityExpansion - Halved all values and made infinite panel + infinity reactor much less
+        // InfinityExpansion
         Reflections.setField(SlimefunItem.getById("ADVANCED_PANEL"), "generation", 75);
         Reflections.setField(SlimefunItem.getById("CELESTIAL_PANEL"), "generation", 250);
         Reflections.setField(SlimefunItem.getById("VOID_PANEL"), "generation", 1200);
         Reflections.setField(SlimefunItem.getById("INFINITE_PANEL"), "generation", 20_000);
         Reflections.setField(SlimefunItem.getById("INFINITY_REACTOR"), "gen", 50_000);
 
-        // SlimefunWarfare - Halved all values
+        // SlimefunWarfare
         Reflections.setField(SlimefunItem.getById("ELEMENTAL_REACTOR"), "energyProducedPerTick", 8_192);
 
         // Galactifun
         Reflections.setField(SlimefunItem.getById("FUSION_REACTOR"), "energyProducedPerTick", 8_192);
 
-        // SupremeExpansion - just no...
+        // SupremeExpansion
         Reflections.setField(SlimefunItem.getById("SUPREME_SUPREME_GENERATOR"), "energy", 20_000);
         Reflections.setField(SlimefunItem.getById("SUPREME_THORNIUM_GENERATOR"), "energy", 10_000);
         Reflections.setField(SlimefunItem.getById("SUPREME_LUMIUM_GENERATOR"), "energy", 5_000);
@@ -215,18 +188,13 @@ public class LiteXpansion extends JavaPlugin implements SlimefunAddon {
             .register();
     }
 
-    private void forceMetricsPush(@Nonnull Metrics metrics) {
-        MetricsBase base = (MetricsBase) Reflections.getField(Metrics.class, metrics, "metricsBase");
-        Reflections.invoke(MetricsBase.class, base, "submitData");
-    }
-
     @Nonnull
     public JavaPlugin getJavaPlugin() {
         return this;
     }
 
     public String getBugTrackerURL() {
-        return "https://github.com/Slimefun-Addon-Community/LiteXpansion/issues";
+        return "https://github.com/wickidcow/SF_LiteXpansion/issues";
     }
 
     public static LiteXpansion getInstance() {

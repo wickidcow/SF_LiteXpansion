@@ -5,10 +5,6 @@ import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.gadgets.SolarHelmet;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 
 import javax.annotation.Nonnull;
@@ -23,16 +19,8 @@ public class AdvancedSolarHelmet extends SolarHelmet {
             type.getGenerationRate()
         );
         this.type = type;
-        Items.ADVANCED_SOLAR_HELMET.addEnchantment(Enchantment.DURABILITY, 1);
-        Items.CARBONADO_SOLAR_HELMET.addEnchantment(Enchantment.DURABILITY, 2);
-        Items.ENERGIZED_SOLAR_HELMET.addEnchantment(Enchantment.DURABILITY, 3);
-        Items.ADVANCEDLX_SOLAR_HELMET.addUnsafeEnchantment(Enchantment.DURABILITY, 4);
-        Items.HYBRID_SOLAR_HELMET.addUnsafeEnchantment(Enchantment.DURABILITY, 5);
-        Items.ULTIMATE_SOLAR_HELMET.addUnsafeEnchantment(Enchantment.DURABILITY, 6);
     }
 
-    @Getter
-    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public enum Type {
 
         ADVANCED(Items.ADVANCED_SOLAR_HELMET, 5, new ItemStack[] {
@@ -67,13 +55,31 @@ public class AdvancedSolarHelmet extends SolarHelmet {
             Items.IRIDIUM_PLATE, null, Items.IRIDIUM_PLATE
         });
 
-
         @Nonnull
         private final SlimefunItemStack item;
         private final int generationRate;
 
         @Nonnull
         private final ItemStack[] recipe;
+
+        Type(@Nonnull SlimefunItemStack item, int generationRate, @Nonnull ItemStack[] recipe) {
+            this.item = item;
+            this.generationRate = generationRate;
+            this.recipe = recipe;
+        }
+
+        @Nonnull
+        public SlimefunItemStack getItem() {
+            return item;
+        }
+
+        public int getGenerationRate() {
+            return generationRate;
+        }
+
+        @Nonnull
+        public ItemStack[] getRecipe() {
+            return recipe;
+        }
     }
 }
-

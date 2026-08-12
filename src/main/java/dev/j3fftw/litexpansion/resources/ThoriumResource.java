@@ -2,9 +2,7 @@ package dev.j3fftw.litexpansion.resources;
 
 import dev.j3fftw.litexpansion.Items;
 import dev.j3fftw.litexpansion.LiteXpansion;
-import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.geo.GEOResource;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.utils.biomes.BiomeMap;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -24,19 +22,15 @@ public class ThoriumResource implements GEOResource {
         final LiteXpansion instance = LiteXpansion.getInstance();
 
         try {
-            if (Slimefun.getMinecraftVersion().isAtLeast(MinecraftVersion.MINECRAFT_1_18)) {
-                map = BiomeMap.getIntMapFromResource(key, instance, "/biome-maps/thorium_v1.18.json");
-            } else {
-                map = BiomeMap.getIntMapFromResource(key, instance, "/biome-maps/thorium_v1.14.json");
-            }
+            map = BiomeMap.getIntMapFromResource(key, instance, "/biome-maps/thorium_v1.21.json");
         } catch (Exception e) {
-            instance.getLogger().log(Level.SEVERE, "Failed to load biome map!", e);
+            instance.getLogger().log(Level.SEVERE, "Failed to load the Minecraft 1.21 thorium biome map!", e);
         }
     }
 
     @Override
     public int getDefaultSupply(@Nonnull World.Environment environment, Biome biome) {
-        return map.getOrDefault(biome, 1);
+        return map == null ? 1 : map.getOrDefault(biome, 1);
     }
 
     @Nonnull
