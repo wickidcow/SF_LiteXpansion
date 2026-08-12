@@ -1,9 +1,7 @@
 package dev.j3fftw.litexpansion.machine.generators;
 
 import dev.j3fftw.litexpansion.Items;
-import io.github.thebusybiscuit.slimefun4.api.MinecraftVersion;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.items.electric.generators.CoalGenerator;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineFuel;
 import org.bukkit.Material;
@@ -76,32 +74,22 @@ public class Generator extends CoalGenerator {
         super.registerFuel(new MachineFuel(1, new ItemStack(Material.STICK)));
         super.registerFuel(new MachineFuel(1, new ItemStack(Material.BAMBOO)));
 
-        // Banners
         for (Material mat : Tag.ITEMS_BANNERS.getValues()) {
             super.registerFuel(new MachineFuel(1, new ItemStack(mat)));
         }
 
-        if (Slimefun.getMinecraftVersion().isBefore(MinecraftVersion.MINECRAFT_1_19)) {
-            for (Material mat : Tag.CARPETS.getValues()) {
-                super.registerFuel(new MachineFuel(1, new ItemStack(mat)));
-            }
-        } else {
-            // Carpets
-            for (Material mat : Tag.WOOL_CARPETS.getValues()) {
-                super.registerFuel(new MachineFuel(1, new ItemStack(mat)));
-            }
+        // This Legacy fork targets Minecraft 1.21.11+, so only the modern carpet tag is needed.
+        for (Material mat : Tag.WOOL_CARPETS.getValues()) {
+            super.registerFuel(new MachineFuel(1, new ItemStack(mat)));
         }
 
-        // Saplings
         for (Material mat : Tag.SAPLINGS.getValues()) {
             super.registerFuel(new MachineFuel(1, new ItemStack(mat)));
         }
 
-        // Wool
         for (Material mat : Tag.WOOL.getValues()) {
             super.registerFuel(new MachineFuel(1, new ItemStack(mat)));
         }
-
     }
 
     @Override
