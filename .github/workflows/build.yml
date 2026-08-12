@@ -75,7 +75,7 @@ jobs:
             -DgeneratePom=true
 
       - name: Build and verify against Slimefun Legacy
-        run: mvn -B -e clean verify --file pom.xml
+        run: mvn -B clean verify --file pom.xml
 
       - name: Stage direct versioned Legacy JAR
         shell: bash
