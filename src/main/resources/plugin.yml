@@ -1,8 +1,9 @@
 name: LiteXpansion
-description: Description
+description: IndustrialCraft-inspired expansion maintained for Slimefun Legacy on modern Paper.
 version: ${project.version}
-api-version: 1.16
+api-version: '1.21.11'
 author: j3fftw
+contributors: [wickidcow]
 depend: [Slimefun]
 softdepend: [SlimyTreeTaps]
 main: dev.j3fftw.litexpansion.LiteXpansion
