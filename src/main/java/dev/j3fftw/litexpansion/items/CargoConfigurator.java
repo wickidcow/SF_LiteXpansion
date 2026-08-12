@@ -1,5 +1,10 @@
 package dev.j3fftw.litexpansion.items;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
+import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import dev.j3fftw.litexpansion.Items;
 import dev.j3fftw.litexpansion.LiteXpansion;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
@@ -10,14 +15,11 @@ import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.data.persistent.PersistentDataAPI;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction;
-import me.mrCookieSlime.CSCoreLibPlugin.Configuration.Config;
-import me.mrCookieSlime.Slimefun.api.BlockStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -30,18 +32,20 @@ import org.bukkit.inventory.meta.ItemMeta;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implements Listener {
 
+    private static final Gson GSON = new Gson();
+    private static final Type CONFIG_TYPE = new TypeToken<Map<String, String>>() {}.getType();
     private static final NamespacedKey CARGO_BLOCK = new NamespacedKey(LiteXpansion.getInstance(), "cargo_block");
     private static final NamespacedKey CARGO_CONFIG = new NamespacedKey(LiteXpansion.getInstance(), "cargo_config");
-    private static final String CONFIG_FORMAT = "LX2\n";
+    private static final String LEGACY_PROPERTIES_FORMAT = "LX2\n";
 
     public CargoConfigurator() {
         super(Items.LITEXPANSION, Items.CARGO_CONFIGURATOR, RecipeType.ENHANCED_CRAFTING_TABLE, new ItemStack[] {
@@ -70,22 +74,18 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
         }
 
         final ItemStack clickedItem = e.getItem();
-
         final SlimefunItem configurator = SlimefunItem.getByItem(Items.CARGO_CONFIGURATOR);
         if (!this.isItem(clickedItem) || configurator == null || configurator.isDisabled()) {
             return;
         }
 
         final ItemMeta meta = clickedItem.getItemMeta();
-
         final List<String> defaultLore = Items.CARGO_CONFIGURATOR.getItemMetaSnapshot().getLore()
             .orElse(new ArrayList<>());
-        final List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>(defaultLore);
+        final List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>(defaultLore);
 
-        // Clear the config and lore.
         if ((e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)
-            && e.getPlayer().isSneaking()
-        ) {
+            && e.getPlayer().isSneaking()) {
             clearConfig(e.getPlayer(), clickedItem, meta, defaultLore, lore);
             e.setCancelled(true);
             return;
@@ -96,7 +96,8 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
             return;
         }
 
-        final SlimefunItem block = BlockStorage.check(e.getClickedBlock());
+        final Block clickedBlock = e.getClickedBlock();
+        final SlimefunItem block = StorageCacheUtils.getSlimefunItem(clickedBlock.getLocation());
         if (block == null) {
             return;
         }
@@ -105,22 +106,18 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
         final String blockId = block.getId();
         if (!blockId.equals(SlimefunItems.CARGO_INPUT_NODE.getItemId())
             && !blockId.equals(SlimefunItems.CARGO_OUTPUT_NODE.getItemId())
-            && !blockId.equals(SlimefunItems.CARGO_OUTPUT_NODE_2.getItemId())
-        ) {
+            && !blockId.equals(SlimefunItems.CARGO_OUTPUT_NODE_2.getItemId())) {
             return;
         }
 
         final Player p = e.getPlayer();
-        if (!canUseCargoConfigurator(p, e.getClickedBlock()) && !p.hasPermission("slimefun.cargo.bypass")) {
+        if (!canUseCargoConfigurator(p, clickedBlock) && !p.hasPermission("slimefun.cargo.bypass")) {
             Slimefun.getLocalization().sendMessage(p, "inventory.no-access", true);
             return;
         }
 
         e.setCancelled(true);
-        runActions(e, clickedItemStack, meta, blockId, lore, defaultLore);
-
-        meta.setLore(lore);
-        clickedItem.setItemMeta(meta);
+        runActions(e, clickedItem, clickedItemStack, meta, blockId, lore, defaultLore);
     }
 
     private void clearConfig(@Nonnull Player player, @Nonnull ItemStack itemStack, @Nonnull ItemMeta meta,
@@ -138,10 +135,18 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
         itemStack.setItemMeta(meta);
     }
 
-    private void runActions(@Nonnull PlayerInteractEvent e, @Nonnull ItemStack clickedItemStack, @Nonnull ItemMeta meta,
-                            @Nonnull String blockId, @Nonnull List<String> lore, @Nonnull List<String> defaultLore) {
+    private void runActions(@Nonnull PlayerInteractEvent e, @Nonnull ItemStack configuratorItem,
+                            @Nonnull ItemStack clickedItemStack, @Nonnull ItemMeta meta,
+                            @Nonnull String blockId, @Nonnull List<String> lore,
+                            @Nonnull List<String> defaultLore) {
         final Block clickedBlock = e.getClickedBlock();
         if (clickedBlock == null) {
+            return;
+        }
+
+        final SlimefunBlockData blockData = StorageCacheUtils.getBlock(clickedBlock.getLocation());
+        if (blockData == null) {
+            e.getPlayer().sendMessage(ChatColor.RED + "Could not read this cargo node's data.");
             return;
         }
 
@@ -158,87 +163,64 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
                 return;
             }
 
-            if (!applyBlockConfig(clickedBlock, config)) {
-                e.getPlayer().sendMessage(ChatColor.RED + "That copied configuration is from an older LiteXpansion build. Copy the node again first.");
-                return;
-            }
+            StorageCacheUtils.executeAfterLoad(blockData, () -> {
+                final Map<String, String> values = decodeConfig(config);
+                if (values == null) {
+                    e.getPlayer().sendMessage(ChatColor.RED + "The copied cargo configuration is invalid. Copy the node again first.");
+                    return;
+                }
 
-            e.getPlayer().sendMessage(ChatColor.GREEN + "Applied configuration!");
+                values.forEach(blockData::setData);
+                e.getPlayer().sendMessage(ChatColor.GREEN + "Applied configuration!");
+            }, true);
         } else if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            PersistentDataAPI.setString(meta, CARGO_BLOCK, blockId);
-            PersistentDataAPI.setString(meta, CARGO_CONFIG, serializeBlockConfig(clickedBlock));
+            StorageCacheUtils.executeAfterLoad(blockData, () -> {
+                PersistentDataAPI.setString(meta, CARGO_BLOCK, blockId);
+                PersistentDataAPI.setString(meta, CARGO_CONFIG, GSON.toJson(blockData.getAllData()));
 
-            if (lore.size() == defaultLore.size() + 2) {
-                lore.clear();
-                lore.addAll(defaultLore);
-            }
-            lore.addAll(Arrays.asList("", ChatColor.GRAY + "> Copied "
-                + ChatColor.RESET + clickedItemStack.getItemMeta().getDisplayName()
-                + ChatColor.GRAY + " config!"
-            ));
-            e.getPlayer().sendMessage(ChatColor.GREEN + "Copied node configuration!");
+                if (lore.size() == defaultLore.size() + 2) {
+                    lore.clear();
+                    lore.addAll(defaultLore);
+                }
+                lore.addAll(Arrays.asList("", ChatColor.GRAY + "> Copied "
+                    + ChatColor.RESET + clickedItemStack.getItemMeta().getDisplayName()
+                    + ChatColor.GRAY + " config!"
+                ));
+
+                meta.setLore(lore);
+                configuratorItem.setItemMeta(meta);
+                e.getPlayer().sendMessage(ChatColor.GREEN + "Copied node configuration!");
+            }, true);
         }
     }
 
     /**
-     * Slimefun Legacy no longer exposes the old BlockStorage JSON helpers. Store
-     * the node's key/value data in a Java Properties payload instead. Properties
-     * escaping preserves arbitrary values while keeping the configurator data as
-     * one PersistentDataContainer string on the item.
+     * Build35 stored cargo data as JSON. Keep that format as the canonical output
+     * so existing Albion configurators remain compatible. The LX2 Properties format
+     * from the first Legacy test build is accepted as an upgrade fallback.
      */
-    @Nonnull
-    private String serializeBlockConfig(@Nonnull Block block) {
-        final Config data = BlockStorage.getLocationInfo(block.getLocation());
-        final Properties properties = new Properties();
-
-        for (String key : data.getKeys()) {
-            final String value = data.getString(key);
-            if (value != null) {
-                properties.setProperty(key, value);
+    private Map<String, String> decodeConfig(@Nonnull String serialized) {
+        if (serialized.startsWith(LEGACY_PROPERTIES_FORMAT)) {
+            final Properties properties = new Properties();
+            try (StringReader reader = new StringReader(serialized.substring(LEGACY_PROPERTIES_FORMAT.length()))) {
+                properties.load(reader);
+            } catch (IOException | IllegalArgumentException ex) {
+                LiteXpansion.getInstance().getLogger().warning("Could not read copied cargo configuration: " + ex.getMessage());
+                return null;
             }
-        }
 
-        try (StringWriter writer = new StringWriter()) {
-            properties.store(writer, null);
-            return CONFIG_FORMAT + writer;
-        } catch (IOException ex) {
-            throw new IllegalStateException("Could not serialize cargo node configuration", ex);
-        }
-    }
-
-    private boolean applyBlockConfig(@Nonnull Block block, @Nonnull String serialized) {
-        if (!serialized.startsWith(CONFIG_FORMAT)) {
-            return false;
-        }
-
-        final Properties properties = new Properties();
-        try (StringReader reader = new StringReader(serialized.substring(CONFIG_FORMAT.length()))) {
-            properties.load(reader);
-        } catch (IOException | IllegalArgumentException ex) {
-            LiteXpansion.getInstance().getLogger().warning("Could not read a copied cargo node configuration: " + ex.getMessage());
-            return false;
-        }
-
-        final Config target = BlockStorage.getLocationInfo(block.getLocation());
-
-        // Replace, rather than merge, the copied configuration just like the old
-        // BlockStorage.setBlockInfo(...) implementation did.
-        for (String key : new HashSet<>(target.getKeys())) {
-            target.setValue(key, null);
-        }
-        for (String key : properties.stringPropertyNames()) {
-            target.setValue(key, properties.getProperty(key));
-        }
-
-        // A currently-open cargo menu was built from the previous configuration.
-        // Close it so Slimefun rebuilds its visual state the next time it is opened.
-        final var menu = BlockStorage.getInventory(block);
-        if (menu != null && menu.toInventory() != null) {
-            for (HumanEntity viewer : new ArrayList<>(menu.toInventory().getViewers())) {
-                viewer.closeInventory();
+            final Map<String, String> values = new java.util.HashMap<>();
+            for (String key : properties.stringPropertyNames()) {
+                values.put(key, properties.getProperty(key));
             }
+            return values;
         }
 
-        return true;
+        try {
+            return GSON.fromJson(serialized, CONFIG_TYPE);
+        } catch (JsonSyntaxException | IllegalStateException ex) {
+            LiteXpansion.getInstance().getLogger().warning("Could not read copied cargo configuration: " + ex.getMessage());
+            return null;
+        }
     }
 }
