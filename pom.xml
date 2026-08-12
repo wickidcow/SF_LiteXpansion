@@ -58,19 +58,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.46</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.bstats</groupId>
-            <artifactId>bstats-bukkit</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.github.Slimefun-Addon-Community</groupId>
             <artifactId>extrautils</artifactId>
             <version>73e76ac06c</version>
@@ -107,13 +94,6 @@
                 <version>3.14.1</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>1.18.46</version>
-                        </path>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 
@@ -132,10 +112,6 @@
                 <configuration>
                     <minimizeJar>true</minimizeJar>
                     <relocations>
-                        <relocation>
-                            <pattern>org.bstats</pattern>
-                            <shadedPattern>dev.j3fftw.litexpansion.libs.bstats</shadedPattern>
-                        </relocation>
                         <relocation>
                             <pattern>dev.j3fftw.extrautils</pattern>
                             <shadedPattern>dev.j3fftw.litexpansion.libs.extrautils</shadedPattern>
