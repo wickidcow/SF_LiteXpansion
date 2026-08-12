@@ -1,66 +1,64 @@
-# LiteXpansion Legacy
+<div align="center">
 
-LiteXpansion is an IndustrialCraft-inspired Slimefun addon originally created by **J3fftw1** and maintained over the years by the Slimefun addon community. This fork keeps the original gameplay, items, machines, recipes, research IDs, and Slimefun IDs intact while updating the addon for the modern **Slimefun Legacy** stack.
+# ⚡🏗️ LiteXpansion — Slimefun Legacy
 
-## Target platform
+**IndustrialCraft-inspired machines, energy, tools, materials, and UU Matter for Slimefun.**
+
+![Slimefun Legacy](https://img.shields.io/badge/Slimefun-Legacy-6bd425?style=for-the-badge)
+![Paper 26.2+](https://img.shields.io/badge/Paper-26.2%2B-blue?style=for-the-badge)
+![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge)
+![Maintained for AlbionMC.com](https://img.shields.io/badge/Maintained%20for-albionmc.com-7b68ee?style=for-the-badge)
+
+</div>
+
+> [!IMPORTANT]
+> LiteXpansion Legacy is an **unofficial community maintenance fork** developed for **Slimefun Legacy** and for use on **albionmc.com**. Its purpose is to preserve LiteXpansion's gameplay and compatibility while carrying it forward to modern servers.
+
+## ⚙️ What does LiteXpansion do?
+
+LiteXpansion brings an **IndustrialCraft-inspired technology progression** into Slimefun. It adds machines, power-dependent processing, advanced materials, electric equipment, Cargo-compatible systems, and configurable **UU Matter** recipes.
+
+The maintenance fork preserves the original gameplay, items, machines, recipes, research IDs, Slimefun IDs, and established configuration formats wherever practical.
+
+## 🧪 Slimefun Legacy target
 
 - **Minecraft:** 1.21.11+
 - **Primary server target:** Paper 26.2+
-- **Java:** 25
-- **Primary Slimefun runtime:** `wickidcow/Slimefun-Legacy`
-- **Build artifact:** `SF_LiteXpansion_Legacy_v1.0.1.jar`
+- **Primary Slimefun runtime:** Slimefun Legacy
+- **Modern build runtime:** Java 25
+- **Expected artifact style:** `SF_LiteXpansion_Legacy_v1.x.x.jar`
 
-The GitHub Actions workflow compiles against the actual Slimefun Legacy release JAR, then exposes the finished LiteXpansion JAR directly instead of wrapping the downloadable artifact in another archive.
+### Legacy maintenance highlights
 
-## Albion Build35 production baseline
+- compiles against the current Slimefun Legacy release API;
+- preserves production-proven storage-cache handling for Cargo Configurator, Glass Cutter, Mining Drill, and Slimefun-block safety checks;
+- preserves established Cargo Configurator JSON data while accepting the short-lived `LX2` format as an upgrade fallback;
+- removes the obsolete custom glow-enchantment registration in favor of modern item-meta glint handling;
+- updates modern Paper attribute handling and player UUID lookup;
+- updates thorium GEO data for modern biomes;
+- removes obsolete pre-1.19 compatibility branches from this modern-only maintenance line;
+- removes obsolete metrics/Lombok build baggage;
+- keeps passive electric-item inventory scans on the safe server thread;
+- disables the historical external updater;
+- makes cross-addon generator nerfing **opt-in** instead of silently changing other addons.
 
-`SF_LiteXpansion-Build35-English-26.2-Albion.jar` was the production build in use before this fork modernization. Legacy v1.0.1 treats that JAR as a compatibility baseline rather than relying only on the older repository source.
+## 🧬 Maintenance sources reviewed
 
-The Build35 comparison confirmed that its gameplay class set matches the Legacy fork while also containing newer Slimefun storage-cache handling in the Cargo Configurator, Glass Cutter, and block-protection event paths. Those storage behaviors are preserved in v1.0.1 while the unsafe or obsolete Build35 pieces are replaced by the newer Legacy/Paper fixes.
+Useful compatibility work has been reviewed or selectively adapted from multiple public branches rather than copying one fork wholesale:
 
-In particular, v1.0.1 keeps compatibility with Cargo Configurator data copied by Build35. Build35's JSON cargo configuration format remains the canonical format, while the short-lived v1.0.0 `LX2` format is accepted as an upgrade fallback.
+- **Slimefun-Addon-Community/LiteXpansion** — primary classic community baseline and immediate upstream for this repository.
+- **SlimefunGuguProject/LiteXpansion** — later maintenance ideas, including glow/update/default behavior changes.
+- **AquaVille/LiteXpansion** — modern Minecraft/Paper compatibility work.
+- **J3fftw1/LiteXpansion** — original project lineage and gameplay foundation.
+- production-tested historical builds — used as compatibility references for storage and Cargo behavior.
 
-## Modernization sources
+Gugu-only API assumptions are not required by the maintained Slimefun Legacy build.
 
-This fork deliberately uses the original LiteXpansion code as its compatibility base and selectively backports useful maintenance from the wider fork family rather than replacing it wholesale with a Gugu-specific implementation.
+## 🧪 UU Matter configuration
 
-Useful work reviewed or incorporated from:
+UU Matter recipes are configured in `plugins/LiteXpansion/uumatter.yml`. Outputs may be Bukkit materials or Slimefun item IDs, with optional amounts.
 
-- **SlimefunGuguProject/LiteXpansion** — removal of the obsolete custom glow enchant and the safer `nerf-other-addons: false` default.
-- **AquaVille/LiteXpansion** — Minecraft 1.21 modernization, current item glint handling, UUID lookup updates, modern thorium biome data, newer Paper attribute handling, removal of old metrics/build baggage, and removal of obsolete pre-1.19 paths.
-- **Slimefun-Addon-Community/LiteXpansion** — the established gameplay/API baseline used by this Legacy fork.
-- **Albion Build35** — production-proven Slimefun storage-cache handling retained for cargo nodes and Slimefun block safety checks.
-- Other public LiteXpansion forks were reviewed for fixes; changes that relied on unsafe material-only item conversion or could conflict with other Slimefun addons were intentionally not imported.
-
-Gugu-only API assumptions such as the newer `SlimefunItemStack.item()` accessor are intentionally not required. This fork remains compatible with Slimefun Legacy's established item model.
-
-## Legacy / Paper modernization
-
-Key changes in this fork include:
-
-- Java 25 build and Paper 26.2 API target while retaining a `plugin.yml` API floor of 1.21.11.
-- Actual CI compilation against the current published Slimefun Legacy release JAR.
-- Preserved Build35 `StorageCacheUtils` handling for Cargo Configurator, Glass Cutter, Mining Drill, and Slimefun-block protection checks.
-- Preserved Build35 Cargo Configurator JSON data so already-copied configurators remain usable.
-- Removed the obsolete custom `GlowEnchant` registration and replaced visual glints with modern item-meta glint overrides.
-- Updated Nano Blade attack-damage modifiers for the modern Paper attribute API while preserving its on/off behavior.
-- Updated thorium GEO data to the modern Minecraft 1.21 biome map.
-- Updated player lookup to UUID-based access.
-- Removed old pre-1.19 generator compatibility branches; this fork only targets 1.21.11+.
-- Removed the obsolete metrics service and Lombok build dependency.
-- Moved the passive electric-item inventory scan back to the safe server thread instead of reading Bukkit player inventories asynchronously.
-- Disabled the historical external updater so it cannot overwrite the Legacy build.
-- Changed cross-addon generator nerfing to **opt-in** instead of silently modifying power output in Slimefun or other addons.
-
-## Configuration
-
-### UU Matter
-
-UU Matter recipes are configured in:
-
-`/plugins/LiteXpansion/uumatter.yml`
-
-Under `recipes`, the output can be a Bukkit material or a Slimefun item ID. Add `:<amount>` when more than one output item is required. Each recipe is a three-line pattern where `x` represents UU Matter and a space represents an empty slot.
+Example:
 
 ```yaml
 recipes:
@@ -70,9 +68,7 @@ recipes:
     - '  x'
 ```
 
-### Legacy safety defaults
-
-`/plugins/LiteXpansion/config.yml` uses:
+Recommended safety defaults remain:
 
 ```yaml
 options:
@@ -80,24 +76,37 @@ options:
   nerf-other-addons: false
 ```
 
-- `auto-update: false` prevents this Legacy fork from replacing itself with an unrelated upstream build.
-- `nerf-other-addons: false` prevents LiteXpansion from silently modifying generator output in Slimefun, Infinity Expansion, Supreme, or other addons. Servers that explicitly want the historical rebalance behavior can enable it manually.
+## ❤️ Credits & project lineage
 
-## Building
+- **J3fftw1** — original creator of **LiteXpansion** and its IndustrialCraft-inspired Slimefun gameplay.
+- **Slimefun-Addon-Community/LiteXpansion** — community-maintained upstream and the immediate source of this fork.
+- **SlimefunGuguProject/LiteXpansion** — later maintenance and compatibility work reviewed by this fork.
+- **AquaVille/LiteXpansion** — modern compatibility work reviewed and selectively adapted.
+- **LiteXpansion and Slimefun contributors** — fixes, testing, APIs, and community maintenance over the project's lifetime.
+- **wickidcow / Slimefun Legacy** — current compatibility and preservation work for modern servers and albionmc.com.
 
-Run the **Build LiteXpansion Legacy** GitHub Actions workflow. A successful run outputs:
+All credit for the original design and gameplay remains with the original developers and contributors. This maintenance fork is intended to preserve that work.
 
-`SF_LiteXpansion_Legacy_v1.0.1.jar`
+## 📜 GNU General Public License v3.0
 
-The workflow validates the Java/Paper/Slimefun Legacy contract before compiling and packaging the addon.
+LiteXpansion is licensed under the **GNU General Public License v3.0 (GPLv3)**. See `LICENSE` for the complete terms.
 
-## Credits
+If you distribute LiteXpansion or a modified GPL-covered version, comply with GPLv3, including preserving applicable notices, identifying modified versions, licensing covered modified source under GPLv3, and making the required Corresponding Source available when distributing object code.
 
-All credit for LiteXpansion's original design and gameplay belongs to its original author and community maintainers. This fork exists to preserve that work and keep it usable on current Minecraft/Paper releases within the Slimefun Legacy ecosystem.
+The software is provided **without warranty** as described by GPLv3.
 
-Upstream/reference projects:
+## ⚖️ Independence & trademark notice
 
-- J3fftw1/LiteXpansion
-- Slimefun-Addon-Community/LiteXpansion
-- SlimefunGuguProject/LiteXpansion
-- AquaVille/LiteXpansion
+**NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.**
+
+LiteXpansion, Slimefun Legacy, and this maintenance fork are independent community projects. They are not sponsored, endorsed, approved, or operated by Mojang Studios or Microsoft. Minecraft-related names, brands, and assets remain the property of their respective rights holders.
+
+This fork is also not represented as an official release of J3fftw1, the Slimefun-Addon-Community, SlimefunGuguProject, AquaVille, or the original Slimefun developers unless explicitly stated by those parties.
+
+---
+
+<div align="center">
+
+**⚡ Industrial progression, Slimefun style. Keep LiteXpansion alive. 🏗️**
+
+</div>
