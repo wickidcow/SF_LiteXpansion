@@ -6,9 +6,6 @@ import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.Rechargeable;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ItemUseHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunItem;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
@@ -18,7 +15,7 @@ import javax.annotation.Nonnull;
 
 /**
  * The {@link MiningDrill} is a {@link SimpleSlimefunItem} that breaks
- * stone quickly
+ * stone quickly.
  *
  * @author FluffyBear
  */
@@ -38,8 +35,6 @@ public class MiningDrill extends SimpleSlimefunItem<ItemUseHandler> implements L
         return 1000;
     }
 
-    @Getter
-    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public enum Type {
 
         MINING(Items.MINING_DRILL, new ItemStack[] {
@@ -56,5 +51,19 @@ public class MiningDrill extends SimpleSlimefunItem<ItemUseHandler> implements L
         @Nonnull
         private final SlimefunItemStack item;
         private final ItemStack[] recipe;
+
+        Type(@Nonnull SlimefunItemStack item, ItemStack[] recipe) {
+            this.item = item;
+            this.recipe = recipe;
+        }
+
+        @Nonnull
+        public SlimefunItemStack getItem() {
+            return item;
+        }
+
+        public ItemStack[] getRecipe() {
+            return recipe;
+        }
     }
 }
