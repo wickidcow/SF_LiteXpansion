@@ -1,6 +1,7 @@
 package dev.j3fftw.litexpansion.items;
 
 import dev.j3fftw.litexpansion.Items;
+import dev.j3fftw.litexpansion.utils.Utils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.Rechargeable;
@@ -22,7 +23,7 @@ import javax.annotation.Nonnull;
 public class MiningDrill extends SimpleSlimefunItem<ItemUseHandler> implements Listener, Rechargeable {
 
     public MiningDrill(Type type) {
-        super(Items.LITEXPANSION, type.getItem(), RecipeType.ENHANCED_CRAFTING_TABLE, type.getRecipe());
+        super(Items.LITEXPANSION, Utils.colorizeLore(type.getItem()), RecipeType.ENHANCED_CRAFTING_TABLE, type.getRecipe());
     }
 
     @Nonnull

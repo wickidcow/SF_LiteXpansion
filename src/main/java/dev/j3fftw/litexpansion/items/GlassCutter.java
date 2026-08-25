@@ -3,8 +3,8 @@ package dev.j3fftw.litexpansion.items;
 import com.xzavier0722.mc.plugin.slimefun4.storage.util.StorageCacheUtils;
 import dev.j3fftw.litexpansion.Items;
 import dev.j3fftw.litexpansion.LiteXpansion;
+import dev.j3fftw.litexpansion.utils.Utils;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.Rechargeable;
 import io.github.thebusybiscuit.slimefun4.core.handlers.ItemUseHandler;
@@ -13,7 +13,6 @@ import io.github.thebusybiscuit.slimefun4.implementation.items.SimpleSlimefunIte
 import io.github.thebusybiscuit.slimefun4.libraries.dough.protection.Interaction;
 import io.github.thebusybiscuit.slimefun4.utils.tags.SlimefunTag;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -23,10 +22,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 
 /**
  * The {@link GlassCutter} is a {@link SimpleSlimefunItem} that breaks
@@ -37,27 +34,13 @@ import java.util.List;
 public class GlassCutter extends SimpleSlimefunItem<ItemUseHandler> implements Listener, Rechargeable {
 
     public GlassCutter() {
-        super(Items.LITEXPANSION, getGlassCutterItem(), RecipeType.ENHANCED_CRAFTING_TABLE, new ItemStack[] {
+        super(Items.LITEXPANSION, Utils.colorizeLore(Items.GLASS_CUTTER), RecipeType.ENHANCED_CRAFTING_TABLE, new ItemStack[] {
             Items.REFINED_IRON, Items.REFINED_IRON, Items.REFINED_IRON,
             new ItemStack(Material.SHEARS), Items.ADVANCED_CIRCUIT, new ItemStack(Material.SHEARS),
             null, Items.CARBON_PLATE, null
         });
 
         Bukkit.getPluginManager().registerEvents(this, LiteXpansion.getInstance());
-    }
-
-    private static SlimefunItemStack getGlassCutterItem() {
-        final ItemMeta meta = Items.GLASS_CUTTER.getItemMeta();
-        final List<String> lore = meta.getLore();
-
-        if (lore != null) {
-            meta.setLore(lore.stream()
-                .map(line -> ChatColor.translateAlternateColorCodes('&', line))
-                .toList());
-            Items.GLASS_CUTTER.setItemMeta(meta);
-        }
-
-        return Items.GLASS_CUTTER;
     }
 
     @Nonnull
