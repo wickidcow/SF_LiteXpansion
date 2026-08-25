@@ -13,8 +13,8 @@ permissions:
 
 env:
   LEGACY_ARTIFACT_VERSION: "1.0.1"
-  LEGACY_SLIMEFUN_VERSION: "4.1.29"
-  LEGACY_SLIMEFUN_TAG: "SlimefunLegacy4.1.29B"
+  LEGACY_SLIMEFUN_VERSION: "4.1.40"
+  LEGACY_SLIMEFUN_TAG: "v4.1.40"
   SLIMEFUN_API_VERSION: "2025.1"
   OUTPUT_NAME: "SF_LiteXpansion1.0.1.jar"
 
@@ -35,8 +35,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          LEGACY_JAR="${RUNNER_TEMP}/Slimefun-${LEGACY_SLIMEFUN_VERSION}.jar"
-          LEGACY_URL="https://github.com/wickidcow/Slimefun-Legacy/releases/download/${LEGACY_SLIMEFUN_TAG}/Slimefun-${LEGACY_SLIMEFUN_VERSION}.jar"
+          LEGACY_JAR="${RUNNER_TEMP}/Slimefun-Legacy${LEGACY_SLIMEFUN_VERSION}.jar"
+          LEGACY_URL="https://github.com/wickidcow/Slimefun-Legacy/releases/download/${LEGACY_SLIMEFUN_TAG}/Slimefun-Legacy${LEGACY_SLIMEFUN_VERSION}.jar"
           curl --fail --location --retry 3 --silent --show-error --output "$LEGACY_JAR" "$LEGACY_URL"
           test -s "$LEGACY_JAR"
           mvn -B install:install-file -Dfile="$LEGACY_JAR" -DgroupId=com.github.SlimefunGuguProject -DartifactId=Slimefun4 -Dversion="$SLIMEFUN_API_VERSION" -Dpackaging=jar -DgeneratePom=true
