@@ -31,6 +31,8 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
+      - name: Verify Doctor Cargo Configurator migration
+        run: python3 scripts/verify_doctor_cargo_config.py .
       - name: Install Slimefun Legacy compile runtime
         shell: bash
         run: |
