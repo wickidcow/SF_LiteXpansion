@@ -28,11 +28,15 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,46 +73,35 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
 
     @EventHandler
     public void onCargoConfiguratorItemClick(PlayerInteractEvent e) {
-        if (e.getItem() == null || e.getMaterial() != Material.COMPASS) {
-            return;
-        }
+        if (e.getItem() == null || e.getMaterial() != Material.COMPASS) return;
 
         final ItemStack clickedItem = e.getItem();
         final SlimefunItem configurator = SlimefunItem.getByItem(Items.CARGO_CONFIGURATOR);
-        if (!this.isItem(clickedItem) || configurator == null || configurator.isDisabled()) {
-            return;
-        }
+        if (!this.isItem(clickedItem) || configurator == null || configurator.isDisabled()) return;
 
         final ItemMeta meta = clickedItem.getItemMeta();
-        final List<String> defaultLore = Items.CARGO_CONFIGURATOR.getItemMetaSnapshot().getLore()
-            .orElse(new ArrayList<>());
+        final List<String> defaultLore = Items.CARGO_CONFIGURATOR.getItemMetaSnapshot().getLore().orElse(new ArrayList<>());
         final List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>(defaultLore);
 
         if ((e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK)
-            && e.getPlayer().isSneaking()) {
+                && e.getPlayer().isSneaking()) {
             clearConfig(e.getPlayer(), clickedItem, meta, defaultLore, lore);
             e.setCancelled(true);
             return;
         }
 
         if ((e.getAction() != Action.RIGHT_CLICK_BLOCK && e.getAction() != Action.LEFT_CLICK_BLOCK)
-            || e.getClickedBlock() == null) {
-            return;
-        }
+                || e.getClickedBlock() == null) return;
 
         final Block clickedBlock = e.getClickedBlock();
         final SlimefunItem block = StorageCacheUtils.getSlimefunItem(clickedBlock.getLocation());
-        if (block == null) {
-            return;
-        }
+        if (block == null) return;
 
         final ItemStack clickedItemStack = block.getItem();
         final String blockId = block.getId();
         if (!blockId.equals(SlimefunItems.CARGO_INPUT_NODE.getItemId())
-            && !blockId.equals(SlimefunItems.CARGO_OUTPUT_NODE.getItemId())
-            && !blockId.equals(SlimefunItems.CARGO_OUTPUT_NODE_2.getItemId())) {
-            return;
-        }
+                && !blockId.equals(SlimefunItems.CARGO_OUTPUT_NODE.getItemId())
+                && !blockId.equals(SlimefunItems.CARGO_OUTPUT_NODE_2.getItemId())) return;
 
         final Player p = e.getPlayer();
         if (!canUseCargoConfigurator(p, clickedBlock) && !p.hasPermission("slimefun.cargo.bypass")) {
@@ -140,9 +133,7 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
                             @Nonnull String blockId, @Nonnull List<String> lore,
                             @Nonnull List<String> defaultLore) {
         final Block clickedBlock = e.getClickedBlock();
-        if (clickedBlock == null) {
-            return;
-        }
+        if (clickedBlock == null) return;
 
         final SlimefunBlockData blockData = StorageCacheUtils.getBlock(clickedBlock.getLocation());
         if (blockData == null) {
@@ -183,9 +174,8 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
                     lore.addAll(defaultLore);
                 }
                 lore.addAll(Arrays.asList("", ChatColor.GRAY + "> Copied "
-                    + ChatColor.RESET + clickedItemStack.getItemMeta().getDisplayName()
-                    + ChatColor.GRAY + " config!"
-                ));
+                        + ChatColor.RESET + clickedItemStack.getItemMeta().getDisplayName()
+                        + ChatColor.GRAY + " config!"));
 
                 meta.setLore(lore);
                 configuratorItem.setItemMeta(meta);
@@ -195,11 +185,42 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
     }
 
     /**
+     * Returns a deterministic private claim only when this ItemStack contains the known LX2 Properties format.
+     * Invalid legacy payloads remain diagnostic/manual-only because no claim is returned.
+     */
+    public static @Nullable String legacyMigrationClaim(@Nonnull ItemStack item) {
+        if (!item.hasItemMeta()) return null;
+        ItemMeta meta = item.getItemMeta();
+        String serialized = PersistentDataAPI.getString(meta, CARGO_CONFIG);
+        if (serialized == null || !serialized.startsWith(LEGACY_PROPERTIES_FORMAT)) return null;
+        if (decodeConfig(serialized) == null) return null;
+        return sha256(serialized);
+    }
+
+    /**
+     * Converts one exact, re-probed LX2 Properties payload to the canonical JSON format.
+     * No block, cargo-node, player or external persistence state is changed.
+     */
+    public static boolean migrateLegacyConfig(@Nonnull ItemStack item, @Nonnull String expectedClaim) {
+        if (!item.hasItemMeta()) return false;
+        ItemMeta meta = item.getItemMeta();
+        String serialized = PersistentDataAPI.getString(meta, CARGO_CONFIG);
+        if (serialized == null || !serialized.startsWith(LEGACY_PROPERTIES_FORMAT)) return false;
+        if (!sha256(serialized).equals(expectedClaim)) return false;
+
+        Map<String, String> values = decodeConfig(serialized);
+        if (values == null) return false;
+        PersistentDataAPI.setString(meta, CARGO_CONFIG, GSON.toJson(values));
+        item.setItemMeta(meta);
+        return true;
+    }
+
+    /**
      * Build35 stored cargo data as JSON. Keep that format as the canonical output
      * so existing Albion configurators remain compatible. The LX2 Properties format
      * from the first Legacy test build is accepted as an upgrade fallback.
      */
-    private Map<String, String> decodeConfig(@Nonnull String serialized) {
+    private static Map<String, String> decodeConfig(@Nonnull String serialized) {
         if (serialized.startsWith(LEGACY_PROPERTIES_FORMAT)) {
             final Properties properties = new Properties();
             try (StringReader reader = new StringReader(serialized.substring(LEGACY_PROPERTIES_FORMAT.length()))) {
@@ -210,9 +231,7 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
             }
 
             final Map<String, String> values = new java.util.HashMap<>();
-            for (String key : properties.stringPropertyNames()) {
-                values.put(key, properties.getProperty(key));
-            }
+            for (String key : properties.stringPropertyNames()) values.put(key, properties.getProperty(key));
             return values;
         }
 
@@ -221,6 +240,21 @@ public class CargoConfigurator extends SimpleSlimefunItem<ItemUseHandler> implem
         } catch (JsonSyntaxException | IllegalStateException ex) {
             LiteXpansion.getInstance().getLogger().warning("Could not read copied cargo configuration: " + ex.getMessage());
             return null;
+        }
+    }
+
+    private static String sha256(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder builder = new StringBuilder(bytes.length * 2);
+            for (byte b : bytes) {
+                builder.append(Character.forDigit((b >>> 4) & 0xF, 16));
+                builder.append(Character.forDigit(b & 0xF, 16));
+            }
+            return builder.toString();
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException("SHA-256 is unavailable", impossible);
         }
     }
 }
