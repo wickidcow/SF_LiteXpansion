@@ -13,8 +13,8 @@ permissions:
 
 env:
   LEGACY_ARTIFACT_VERSION: "1.0.1"
-  LEGACY_SLIMEFUN_VERSION: "4.1.40"
-  LEGACY_SLIMEFUN_TAG: "v4.1.40"
+  LEGACY_SLIMEFUN_VERSION: "4.1.50"
+  LEGACY_SLIMEFUN_TAG: "v4.1.50"
   SLIMEFUN_API_VERSION: "2025.1"
   OUTPUT_NAME: "SF_LiteXpansion1.0.1.jar"
 
@@ -31,6 +31,8 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
+      - name: Verify Doctor Cargo Configurator migration
+        run: python3 scripts/verify_doctor_cargo_config.py .
       - name: Install Slimefun Legacy compile runtime
         shell: bash
         run: |
