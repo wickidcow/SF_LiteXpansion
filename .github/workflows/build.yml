@@ -1,4 +1,4 @@
-name: Build LiteXpansion Legacy
+name: Build LiteXpansion
 
 on:
   push:
@@ -12,9 +12,9 @@ permissions:
   contents: write
 
 env:
-  LEGACY_ARTIFACT_VERSION: "1.0.2"
-  LEGACY_SLIMEFUN_VERSION: "4.1.50"
-  LEGACY_SLIMEFUN_TAG: "v4.1.50"
+  VERSION: "1.0.2"
+  SLIMEFUN_VERSION: "4.1.50"
+  SLIMEFUN_TAG: "v4.1.50"
   SLIMEFUN_API_VERSION: "2025.1"
   OUTPUT_NAME: "SF_LiteXpansion1.0.2.jar"
 
@@ -31,17 +31,24 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - name: Verify Doctor Cargo Configurator migration
-        run: python3 scripts/verify_doctor_cargo_config.py .
-      - name: Install Slimefun Legacy compile runtime
+      - name: Verify canonical release identity
         shell: bash
         run: |
           set -euo pipefail
-          LEGACY_JAR="${RUNNER_TEMP}/Slimefun-Legacy${LEGACY_SLIMEFUN_VERSION}.jar"
-          LEGACY_URL="https://github.com/wickidcow/Slimefun-Legacy/releases/download/${LEGACY_SLIMEFUN_TAG}/Slimefun-Legacy${LEGACY_SLIMEFUN_VERSION}.jar"
-          curl --fail --location --retry 3 --silent --show-error --output "$LEGACY_JAR" "$LEGACY_URL"
-          test -s "$LEGACY_JAR"
-          mvn -B install:install-file -Dfile="$LEGACY_JAR" -DgroupId=com.github.SlimefunGuguProject -DartifactId=Slimefun4 -Dversion="$SLIMEFUN_API_VERSION" -Dpackaging=jar -DgeneratePom=true
+          [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+)*$ ]]
+          test "$OUTPUT_NAME" = "SF_LiteXpansion${VERSION}.jar"
+          test "$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" = "$VERSION"
+      - name: Verify Doctor Cargo Configurator migration
+        run: python3 scripts/verify_doctor_cargo_config.py .
+      - name: Install Slimefun compile runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          JAR="${RUNNER_TEMP}/Slimefun-Legacy${SLIMEFUN_VERSION}.jar"
+          URL="https://github.com/wickidcow/Slimefun-Legacy/releases/download/${SLIMEFUN_TAG}/Slimefun-Legacy${SLIMEFUN_VERSION}.jar"
+          curl --fail --location --retry 3 --silent --show-error --output "$JAR" "$URL"
+          test -s "$JAR"
+          mvn -B install:install-file -Dfile="$JAR" -DgroupId=com.github.SlimefunGuguProject -DartifactId=Slimefun4 -Dversion="$SLIMEFUN_API_VERSION" -Dpackaging=jar -DgeneratePom=true
       - name: Verify Paper 1.21.11 baseline compilation
         run: mvn -B clean verify --file pom.xml -Dpaper.version=1.21.11-R0.1-SNAPSHOT -Dmaven.compiler.release=21
       - name: Verify Paper 26.2 compilation
@@ -50,7 +57,7 @@ jobs:
         run: mvn -B clean verify --file pom.xml -Dpaper.version=26.3-rc-3.build.1-alpha -Dmaven.compiler.release=25
       - name: Build universal Java 21 release JAR
         run: mvn -B clean package --file pom.xml -Dpaper.version=1.21.11-R0.1-SNAPSHOT -Dmaven.compiler.release=21
-      - name: Stage and verify versioned JAR
+      - name: Stage and verify canonical JAR
         shell: bash
         run: |
           set -euo pipefail
@@ -60,29 +67,33 @@ jobs:
           test -s "$JAR"
           cp "$JAR" "dist/${OUTPUT_NAME}"
           unzip -tqq "dist/${OUTPUT_NAME}"
+          PLUGIN_VERSION=$(unzip -p "dist/${OUTPUT_NAME}" plugin.yml | awk -F': *' '/^version:/ {gsub(/["'"'"']/,"",$2); print $2; exit}')
+          test "$PLUGIN_VERSION" = "$VERSION"
+          if printf '%s\n' "$PLUGIN_VERSION" | grep -Eiq '(legacy|english|snapshot)'; then exit 1; fi
           MAIN_CLASS=$(unzip -p "dist/${OUTPUT_NAME}" plugin.yml | awk '/^main:/ {print $2; exit}')
-          test -n "$MAIN_CLASS"
           javap -verbose -classpath "dist/${OUTPUT_NAME}" "$MAIN_CLASS" | grep -F 'major version: 65'
           sha256sum "dist/${OUTPUT_NAME}"
-      - name: Upload raw JAR artifact
+      - name: Upload canonical raw JAR artifact
         uses: actions/upload-artifact@v7
         with:
           name: ${{ env.OUTPUT_NAME }}
           path: dist/${{ env.OUTPUT_NAME }}
           archive: false
           if-no-files-found: error
-      - name: Publish raw JAR release asset
+      - name: Publish canonical raw JAR release asset
         if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') || github.ref_name == github.event.repository.default_branch
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then TAG="$GITHUB_REF_NAME"; else TAG="v${LEGACY_ARTIFACT_VERSION}"; fi
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then TAG="$GITHUB_REF_NAME"; else TAG="v${VERSION}"; fi
           JAR="dist/${OUTPUT_NAME}"
-          NOTES="LiteXpansion 1.0.2 adds Paper 26.3 alpha compatibility validation while restoring a Paper 1.21.11 / Java 21 universal release baseline and keeping Paper 26.2 as the primary production target. The Maven build now emits ${OUTPUT_NAME} directly instead of an unversioned LiteXpansion.jar."
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$JAR" --clobber
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            while IFS= read -r OLD; do
+              if [[ "$OLD" == *.jar && "$OLD" != "$OUTPUT_NAME" ]]; then gh release delete-asset "$TAG" "$OLD" --repo "$GITHUB_REPOSITORY" -y; fi
+            done < <(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')
+            gh release upload "$TAG" "$JAR" --repo "$GITHUB_REPOSITORY" --clobber
           else
-            gh release create "$TAG" "$JAR" --target "$GITHUB_SHA" --title "SF_LiteXpansion $TAG" --notes "$NOTES"
+            gh release create "$TAG" "$JAR" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "SF_LiteXpansion ${VERSION}" --notes "LiteXpansion ${VERSION}: canonical ${OUTPUT_NAME} release."
           fi
