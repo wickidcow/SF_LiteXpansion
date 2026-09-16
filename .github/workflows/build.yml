@@ -12,20 +12,20 @@ permissions:
   contents: write
 
 env:
-  LEGACY_ARTIFACT_VERSION: "1.0.1"
+  LEGACY_ARTIFACT_VERSION: "1.0.2"
   LEGACY_SLIMEFUN_VERSION: "4.1.50"
   LEGACY_SLIMEFUN_TAG: "v4.1.50"
   SLIMEFUN_API_VERSION: "2025.1"
-  OUTPUT_NAME: "SF_LiteXpansion1.0.1.jar"
+  OUTPUT_NAME: "SF_LiteXpansion1.0.2.jar"
 
 jobs:
   build:
-    name: Paper 26.2 / Java 25 / Slimefun Legacy
+    name: Universal LiteXpansion compatibility
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
-      - name: Set up Java 25
+        uses: actions/checkout@v6
+      - name: Set up Java 25 compiler
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -42,22 +42,32 @@ jobs:
           curl --fail --location --retry 3 --silent --show-error --output "$LEGACY_JAR" "$LEGACY_URL"
           test -s "$LEGACY_JAR"
           mvn -B install:install-file -Dfile="$LEGACY_JAR" -DgroupId=com.github.SlimefunGuguProject -DartifactId=Slimefun4 -Dversion="$SLIMEFUN_API_VERSION" -Dpackaging=jar -DgeneratePom=true
-      - name: Build and verify against Slimefun Legacy
-        run: mvn -B clean verify --file pom.xml
-      - name: Stage versioned JAR
+      - name: Verify Paper 1.21.11 baseline compilation
+        run: mvn -B clean verify --file pom.xml -Dpaper.version=1.21.11-R0.1-SNAPSHOT -Dmaven.compiler.release=21
+      - name: Verify Paper 26.2 compilation
+        run: mvn -B clean verify --file pom.xml "-Dpaper.version=[26.2.build,26.3)" -Dmaven.compiler.release=25
+      - name: Verify Paper 26.3 alpha compilation
+        run: mvn -B clean verify --file pom.xml -Dpaper.version=26.3-rc-3.build.1-alpha -Dmaven.compiler.release=25
+      - name: Build universal Java 21 release JAR
+        run: mvn -B clean package --file pom.xml -Dpaper.version=1.21.11-R0.1-SNAPSHOT -Dmaven.compiler.release=21
+      - name: Stage and verify versioned JAR
         shell: bash
         run: |
           set -euo pipefail
           rm -rf dist
           mkdir -p dist
-          mapfile -t jars < <(find target -maxdepth 1 -type f -name '*.jar' ! -name 'original-*' ! -name '*-sources.jar' ! -name '*-javadoc.jar')
-          test "${#jars[@]}" -eq 1
-          cp "${jars[0]}" "dist/${OUTPUT_NAME}"
-          test -s "dist/${OUTPUT_NAME}"
+          JAR="target/${OUTPUT_NAME}"
+          test -s "$JAR"
+          cp "$JAR" "dist/${OUTPUT_NAME}"
+          unzip -tqq "dist/${OUTPUT_NAME}"
+          MAIN_CLASS=$(unzip -p "dist/${OUTPUT_NAME}" plugin.yml | awk '/^main:/ {print $2; exit}')
+          test -n "$MAIN_CLASS"
+          javap -verbose -classpath "dist/${OUTPUT_NAME}" "$MAIN_CLASS" | grep -F 'major version: 65'
           sha256sum "dist/${OUTPUT_NAME}"
       - name: Upload raw JAR artifact
         uses: actions/upload-artifact@v7
         with:
+          name: ${{ env.OUTPUT_NAME }}
           path: dist/${{ env.OUTPUT_NAME }}
           archive: false
           if-no-files-found: error
@@ -70,4 +80,9 @@ jobs:
           set -euo pipefail
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then TAG="$GITHUB_REF_NAME"; else TAG="v${LEGACY_ARTIFACT_VERSION}"; fi
           JAR="dist/${OUTPUT_NAME}"
-          if gh release view "$TAG" >/dev/null 2>&1; then gh release upload "$TAG" "$JAR" --clobber; else gh release create "$TAG" "$JAR" --target "$GITHUB_SHA" --generate-notes --title "SF_LiteXpansion $TAG"; fi
+          NOTES="LiteXpansion 1.0.2 adds Paper 26.3 alpha compatibility validation while restoring a Paper 1.21.11 / Java 21 universal release baseline and keeping Paper 26.2 as the primary production target. The Maven build now emits ${OUTPUT_NAME} directly instead of an unversioned LiteXpansion.jar."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$JAR" --clobber
+          else
+            gh release create "$TAG" "$JAR" --target "$GITHUB_SHA" --title "SF_LiteXpansion $TAG" --notes "$NOTES"
+          fi
