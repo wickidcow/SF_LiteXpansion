@@ -6,28 +6,22 @@
 
     <groupId>dev.j3fftw</groupId>
     <artifactId>LiteXpansion</artifactId>
-    <version>1.0.1-26.2-legacy</version>
+    <version>1.0.2</version>
     <name>LiteXpansion Legacy</name>
 
     <properties>
-        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <paper.version>[26.2.build,)</paper.version>
+        <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
         <slimefun.groupId>com.github.SlimefunGuguProject</slimefun.groupId>
         <slimefun.artifactId>Slimefun4</slimefun.artifactId>
         <slimefun.version>2025.1</slimefun.version>
     </properties>
 
     <repositories>
-        <repository>
-            <id>papermc</id>
-            <url>https://repo.papermc.io/repository/maven-public/</url>
-        </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
+        <repository><id>papermc</id><url>https://repo.papermc.io/repository/maven-public/</url></repository>
+        <repository><id>jitpack.io</id><url>https://jitpack.io</url></repository>
     </repositories>
 
     <dependencies>
@@ -37,26 +31,18 @@
             <version>${paper.version}</version>
             <scope>provided</scope>
         </dependency>
-
-        <!--
-            Portable Maven fallback. GitHub Actions overwrites this exact local
-            coordinate with the Slimefun Legacy release JAR before compilation,
-            so published Legacy artifacts compile against Legacy itself.
-        -->
         <dependency>
             <groupId>${slimefun.groupId}</groupId>
             <artifactId>${slimefun.artifactId}</artifactId>
             <version>${slimefun.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
             <version>3.0.2</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>com.github.Slimefun-Addon-Community</groupId>
             <artifactId>extrautils</artifactId>
@@ -66,9 +52,8 @@
 
     <build>
         <defaultGoal>clean verify</defaultGoal>
-        <finalName>LiteXpansion</finalName>
+        <finalName>SF_LiteXpansion1.0.2</finalName>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
-
         <resources>
             <resource>
                 <targetPath>.</targetPath>
@@ -81,12 +66,9 @@
             </resource>
             <resource>
                 <directory>${basedir}</directory>
-                <includes>
-                    <include>LICENSE</include>
-                </includes>
+                <includes><include>LICENSE</include></includes>
             </resource>
         </resources>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -97,18 +79,12 @@
                     <forceLegacyJavacApi>true</forceLegacyJavacApi>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.6.2</version>
                 <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
+                    <execution><phase>package</phase><goals><goal>shade</goal></goals></execution>
                 </executions>
                 <configuration>
                     <minimizeJar>true</minimizeJar>
