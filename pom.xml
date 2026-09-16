@@ -7,7 +7,7 @@
     <groupId>dev.j3fftw</groupId>
     <artifactId>LiteXpansion</artifactId>
     <version>1.0.2</version>
-    <name>LiteXpansion Legacy</name>
+    <name>LiteXpansion</name>
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
@@ -25,86 +25,32 @@
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>${paper.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>${slimefun.groupId}</groupId>
-            <artifactId>${slimefun.artifactId}</artifactId>
-            <version>${slimefun.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.Slimefun-Addon-Community</groupId>
-            <artifactId>extrautils</artifactId>
-            <version>73e76ac06c</version>
-        </dependency>
+        <dependency><groupId>io.papermc.paper</groupId><artifactId>paper-api</artifactId><version>${paper.version}</version><scope>provided</scope></dependency>
+        <dependency><groupId>${slimefun.groupId}</groupId><artifactId>${slimefun.artifactId}</artifactId><version>${slimefun.version}</version><scope>provided</scope></dependency>
+        <dependency><groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId><version>3.0.2</version><scope>provided</scope></dependency>
+        <dependency><groupId>com.github.Slimefun-Addon-Community</groupId><artifactId>extrautils</artifactId><version>73e76ac06c</version></dependency>
     </dependencies>
 
     <build>
         <defaultGoal>clean verify</defaultGoal>
-        <finalName>SF_LiteXpansion1.0.2</finalName>
+        <finalName>SF_LiteXpansion${project.version}</finalName>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
         <resources>
-            <resource>
-                <targetPath>.</targetPath>
-                <filtering>true</filtering>
-                <directory>${basedir}/src/main/resources/</directory>
-                <includes>
-                    <include>*</include>
-                    <include>biome-maps/*.json</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>${basedir}</directory>
-                <includes><include>LICENSE</include></includes>
-            </resource>
+            <resource><targetPath>.</targetPath><filtering>true</filtering><directory>${basedir}/src/main/resources/</directory><includes><include>*</include><include>biome-maps/*.json</include></includes></resource>
+            <resource><directory>${basedir}</directory><includes><include>LICENSE</include></includes></resource>
         </resources>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.1</version>
-                <configuration>
-                    <release>${maven.compiler.release}</release>
-                    <forceLegacyJavacApi>true</forceLegacyJavacApi>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.1</version>
+                <configuration><release>${maven.compiler.release}</release><forceLegacyJavacApi>true</forceLegacyJavacApi></configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.2</version>
-                <executions>
-                    <execution><phase>package</phase><goals><goal>shade</goal></goals></execution>
-                </executions>
+                <groupId>org.apache.maven.plugins</groupId><artifactId>maven-shade-plugin</artifactId><version>3.6.2</version>
+                <executions><execution><phase>package</phase><goals><goal>shade</goal></goals></execution></executions>
                 <configuration>
                     <minimizeJar>true</minimizeJar>
-                    <relocations>
-                        <relocation>
-                            <pattern>dev.j3fftw.extrautils</pattern>
-                            <shadedPattern>dev.j3fftw.litexpansion.libs.extrautils</shadedPattern>
-                        </relocation>
-                    </relocations>
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>META-INF/*.MF</exclude>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
+                    <relocations><relocation><pattern>dev.j3fftw.extrautils</pattern><shadedPattern>dev.j3fftw.litexpansion.libs.extrautils</shadedPattern></relocation></relocations>
+                    <filters><filter><artifact>*:*</artifact><excludes><exclude>META-INF/*.MF</exclude><exclude>META-INF/*.SF</exclude><exclude>META-INF/*.DSA</exclude><exclude>META-INF/*.RSA</exclude></excludes></filter></filters>
                 </configuration>
             </plugin>
         </plugins>
