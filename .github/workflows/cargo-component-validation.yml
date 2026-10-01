@@ -1,0 +1,79 @@
+name: Cargo Configurator Exact-Core Validation
+on:
+  push:
+    branches: ['work/cargo-configurator-components-r96']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Apply and verify scoped source correction
+        run: |
+          python3 .audit/apply_cargo_components.py
+          python3 scripts/verify_doctor_cargo_config.py .
+          git diff --check
+      - name: Install exact coordinated core, never a fallback release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p exact-core evidence
+          gh run download 36801932529 --repo wickidcow/Slimefun-Legacy --name full-stack-core --dir exact-core
+          echo 'ea4b0c47ee41b852abb5c97bacbb4f1c0ebc5126c29fb36d39e7c71747d13bdd  exact-core/Slimefun-Legacy-full-stack.jar' | sha256sum -c -
+          mvn -B install:install-file -Dfile=exact-core/Slimefun-Legacy-full-stack.jar -DgroupId=com.github.SlimefunGuguProject -DartifactId=Slimefun4 -Dversion=2025.1 -Dpackaging=jar -DgeneratePom=true
+      - name: Build and execute native component tests
+        run: |
+          set -euo pipefail
+          mvn -B clean verify -Dpaper.version=1.21.11-R0.1-SNAPSHOT -Dmaven.compiler.release=21 2>&1 | tee evidence/build.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          files = list(Path('target/surefire-reports').glob('TEST-*.xml'))
+          assert len(files) == 1, files
+          suite = ET.parse(files[0]).getroot()
+          assert int(suite.get('tests')) == 14, suite.attrib
+          assert all(int(suite.get(k,'0')) == 0 for k in ('failures','errors','skipped')), suite.attrib
+          print('Cargo component tests:', suite.attrib)
+          PY
+      - name: Preserve validated source blobs without updating branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, os, subprocess
+          from pathlib import Path
+          names = ['pom.xml','src/main/java/dev/j3fftw/litexpansion/items/CargoConfigurator.java','src/main/java/dev/j3fftw/litexpansion/items/CargoConfiguratorLore.java','src/test/java/dev/j3fftw/litexpansion/items/CargoConfiguratorLoreTest.java']
+          manifest = {}
+          for name in names:
+              data = Path(name).read_bytes()
+              sha = hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              result = subprocess.run(['gh','api','--method','POST',f"repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs",'--input','-','--jq','.sha'],input=json.dumps({'content':base64.b64encode(data).decode(),'encoding':'base64'}),text=True,capture_output=True,check=True)
+              assert result.stdout.strip() == sha
+              manifest[name] = sha
+              target = Path('evidence/source') / name
+              target.parent.mkdir(parents=True,exist_ok=True)
+              target.write_bytes(data)
+          Path('evidence/validated-blobs.json').write_text(json.dumps(manifest,indent=2))
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: cargo-component-evidence
+          path: |
+            evidence/
+            target/surefire-reports/TEST-*.xml
+            target/SF_LiteXpansion*.jar
+          retention-days: 14
+          if-no-files-found: warn
