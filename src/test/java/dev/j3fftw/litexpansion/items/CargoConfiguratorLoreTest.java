@@ -39,7 +39,7 @@ class CargoConfiguratorLoreTest {
     }
 
     @Test void changedLengthClearRestoresTheOriginalTemplateComponents() {
-        for (var existing : List.of(List.<Component>of(), List.of(Component.empty(), Component.empty()))) {
+        for (var existing : List.of(List.<Component>of(), List.<Component>of(Component.empty(), Component.empty()))) {
             assertSame(RICH, CargoConfiguratorLore.cleared(existing, List.of(RICH)).getFirst());
         }
     }
