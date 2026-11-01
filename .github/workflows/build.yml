@@ -38,6 +38,8 @@ jobs:
           [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+)*$ ]]
           test "$OUTPUT_NAME" = "SF_LiteXpansion${VERSION}.jar"
           test "$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" = "$VERSION"
+      - name: Verify immutable release policy regressions
+        run: python3 -m unittest discover -s scripts -p 'test_release_policy.py' -v
       - name: Verify Doctor Cargo Configurator migration
         run: python3 scripts/verify_doctor_cargo_config.py .
       - name: Install Slimefun compile runtime
@@ -80,20 +82,9 @@ jobs:
           path: dist/${{ env.OUTPUT_NAME }}
           archive: false
           if-no-files-found: error
-      - name: Publish canonical raw JAR release asset
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') || github.ref_name == github.event.repository.default_branch
+      - name: Publish distinct immutable release (manual exact-tag only)
+        if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
-        run: |
-          set -euo pipefail
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then TAG="$GITHUB_REF_NAME"; else TAG="v${VERSION}"; fi
-          JAR="dist/${OUTPUT_NAME}"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            while IFS= read -r OLD; do
-              if [[ "$OLD" == *.jar && "$OLD" != "$OUTPUT_NAME" ]]; then gh release delete-asset "$TAG" "$OLD" --repo "$GITHUB_REPOSITORY" -y; fi
-            done < <(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')
-            gh release upload "$TAG" "$JAR" --repo "$GITHUB_REPOSITORY" --clobber
-          else
-            gh release create "$TAG" "$JAR" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "SF_LiteXpansion ${VERSION}" --notes "LiteXpansion ${VERSION}: canonical ${OUTPUT_NAME} release."
-          fi
+        run: bash scripts/publish_immutable_release.sh
